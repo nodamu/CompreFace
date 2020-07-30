@@ -16,15 +16,13 @@
 
 package api;
 
-import impl.FacePrediction;
-
 public interface IModel {
 
     String getName();
 
     IFacePrediction predict(byte[] image);
 
-    void addFace(byte[] image);
+    void addFace(IFaceImage image);
 
     void train();
 }

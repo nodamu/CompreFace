@@ -20,8 +20,6 @@ import java.util.Collection;
 
 public interface IFRS {
 
-    void predict();
-
     String getHost();
 
     String getPort();

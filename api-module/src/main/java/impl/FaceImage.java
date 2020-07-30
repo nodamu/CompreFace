@@ -17,9 +17,11 @@
 package impl;
 
 import api.IFaceImage;
+import lombok.Builder;
 import lombok.Value;
 
 @Value
+@Builder
 public class FaceImage implements IFaceImage {
 
     private String name;

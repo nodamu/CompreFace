@@ -23,14 +23,10 @@ import lombok.Builder;
 import lombok.Value;
 
 @Builder
-//@AllArgsConstructor
 @Value
 public class FRS implements IFRS {
 
-    private String host; // хост БД для хранения faces
-    private String port; // порт БД для хранения faces
+    private String host;
+    private String port;
     private Collection<IModel> models;
-
-    public void predict() {
-    }
 }

@@ -16,6 +16,7 @@
 
 package impl;
 
+import api.IFaceImage;
 import api.IFacePrediction;
 import api.IModel;
 import lombok.Builder;
@@ -36,7 +37,7 @@ public class Model implements IModel {
     }
 
     @Override
-    public void addFace(final byte[] image) {
+    public void addFace(IFaceImage image) {
     }
 
     @Override
