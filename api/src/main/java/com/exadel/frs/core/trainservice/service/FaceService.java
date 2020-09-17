@@ -16,46 +16,18 @@
 
 package com.exadel.frs.core.trainservice.service;
 
-import static com.exadel.frs.core.trainservice.enums.RetrainOption.getTrainingOption;
-import com.exadel.frs.core.trainservice.component.FaceClassifierManager;
-import com.exadel.frs.core.trainservice.dao.FaceDao;
-import com.exadel.frs.core.trainservice.entity.Face;
-import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
-import org.springframework.stereotype.Service;
+import com.exadel.frs.core.trainservice.cache.CachedFace;
+import java.util.Set;
 
-@Service
-@RequiredArgsConstructor
-public class FaceService {
+public interface FaceService {
 
-    private final FaceDao faceDao;
-    private final RetrainService retrainService;
-    private final FaceClassifierManager classifierManager;
+    Set<CachedFace> findFaces(final String apiKey);
 
-    public List<Face> findFaces(final String apiKey) {
-        return faceDao.findAllFacesByApiKey(apiKey);
-    }
+    Set<CachedFace> deleteFaceByName(final String faceName, final String apiKey);
 
-    public List<Face> deleteFaceByName(
-            final String faceName,
-            final String apiKey
-    ) {
-        return faceDao.deleteFaceByName(faceName, apiKey);
-    }
+    CachedFace deleteFaceById(final String apiKey, final String id);
 
-    public Face deleteFaceById(
-            final String id
-    ) {
-        return faceDao.deleteFaceById(id);
-    }
+    Set<CachedFace> deleteFacesByModel(final String modelKey);
 
-    public List<Face> deleteFacesByModel(final String modelKey) {
-        classifierManager.removeFaceClassifier(modelKey);
-        return faceDao.deleteFacesByApiKey(modelKey);
-    }
-
-    public int countFacesInModel(final String modelKey) {
-        return faceDao.countFacesInModel(modelKey);
-    }
+    int countFacesInModel(final String modelKey);
 }

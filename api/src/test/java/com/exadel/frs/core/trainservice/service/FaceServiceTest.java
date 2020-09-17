@@ -25,6 +25,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import com.exadel.frs.core.trainservice.cache.FaceCacheProvider;
+import com.exadel.frs.core.trainservice.cache.FaceCollection;
 import com.exadel.frs.core.trainservice.component.FaceClassifierManager;
 import com.exadel.frs.core.trainservice.dao.FaceDao;
 import com.exadel.frs.core.trainservice.entity.Face;
@@ -43,8 +45,11 @@ class FaceServiceTest {
     @Mock
     private FaceClassifierManager classifierManager;
 
+    @Mock
+    private FaceCacheProvider faceCacheProvider;
+
     @InjectMocks
-    private FaceService faceService;
+    private FaceServiceImpl faceService;
 
     private static final String MODEL_KEY = "model_key";
     private static final String API_KEY = MODEL_KEY;
@@ -56,16 +61,22 @@ class FaceServiceTest {
 
     @Test
     void findAllFaceNames() {
-        val faces = List.<Face>of();
+        val faces = List.of(
+                makeFace("A", API_KEY),
+                makeFace("B", API_KEY),
+                makeFace("C", API_KEY)
+        );
+        val faceCollection = FaceCollection.buildFromFaces(faces);
 
-        when(faceDao.findAllFacesByApiKey(API_KEY)).thenReturn(faces);
+        when(faceCacheProvider.getOrLoad(API_KEY))
+                .thenReturn(faceCollection);
 
         val actual = faceService.findFaces(API_KEY);
 
         assertThat(actual).isNotNull();
-        assertThat(actual).isEqualTo(faces);
+        assertThat(actual.size()).isEqualTo(faces.size());
 
-        verify(faceDao).findAllFacesByApiKey(API_KEY);
+        verify(faceCacheProvider).getOrLoad(API_KEY);
         verifyNoMoreInteractions(faceDao);
     }
 
@@ -83,7 +94,7 @@ class FaceServiceTest {
     void deleteFaceById() {
         val faceId = randomUUID().toString();
 
-        faceService.deleteFaceById(faceId);
+        faceService.deleteFaceById(faceId, API_KEY);
 
         verify(faceDao).deleteFaceById(faceId);
         verifyNoInteractions(classifierManager);
@@ -91,8 +102,15 @@ class FaceServiceTest {
 
     @Test
     void deleteFacesByModel() {
-        val faces = List.of(new Face(), new Face(), new Face());
+        val faces = List.of(
+                makeFace("A", API_KEY),
+                makeFace("B", API_KEY),
+                makeFace("C", API_KEY)
+        );
+        val faceCollection = FaceCollection.buildFromFaces(faces);
 
+        when(faceCacheProvider.getOrLoad(API_KEY))
+                .thenReturn(faceCollection);
         when(faceDao.deleteFacesByApiKey(API_KEY)).thenReturn(faces);
         doNothing().when(classifierManager).removeFaceClassifier(API_KEY);
 
@@ -105,5 +123,15 @@ class FaceServiceTest {
         inOrder.verify(classifierManager).removeFaceClassifier(API_KEY);
         inOrder.verify(faceDao).deleteFacesByApiKey(API_KEY);
         verifyNoMoreInteractions(faceDao);
+    }
+
+    public static Face makeFace(final String name, final String modelApiKey) {
+        return new Face()
+                .setFaceName(name)
+                .setApiKey(modelApiKey)
+                .setEmbedding(new Face.Embedding(List.of(0.1, 0.2), "1.0"))
+                .setFaceImg("hex-string-1".getBytes())
+                .setRawImg("hex-string-2".getBytes())
+                .setId(randomUUID().toString());
     }
 }
