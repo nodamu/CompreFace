@@ -14,33 +14,5 @@
  * permissions and limitations under the License.
  */
 
-import {EntityMetadataMap, EntityDataModuleConfig, DefaultDataServiceConfig} from '@ngrx/data';
-import {environment} from '../../environments/environment';
-
-export const defaultDataServiceConfig: DefaultDataServiceConfig = {
-  // root: environment.adminApiUrl,
-  // example of configuration:
-  entityHttpResourceUrls: {
-    // Case matters. Match the case of the entity name.
-    Organization: {
-      // You must specify the root as part of the resource URL.
-      entityResourceUrl: environment.adminApiUrl + 'org/',
-      collectionResourceUrl: environment.adminApiUrl + 'orgs'
-    }
-  },
-};
-
-const entityMetadata: EntityMetadataMap = {
-  Organization: {
-    additionalCollectionState: {
-      selectId: null
-    }
-  }
-};
-
-const pluralNames = {};
-
-export const entityConfig: EntityDataModuleConfig = {
-  entityMetadata,
-  pluralNames
-};
+import { EntityMetadataMap, EntityDataModuleConfig, DefaultDataServiceConfig } from '@ngrx/data';
+import { environment } from '../../environments/environment';

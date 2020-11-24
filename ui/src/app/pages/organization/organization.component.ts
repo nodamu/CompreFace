@@ -14,8 +14,9 @@
  * permissions and limitations under the License.
  */
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-
-import { OrganizationService } from './organization.service';
+import { Store } from '@ngrx/store';
+import { AppState } from 'src/app/store';
+import { getUserInfo } from 'src/app/store/userInfo/action';
 
 @Component({
   selector: 'app-organization',
@@ -23,14 +24,10 @@ import { OrganizationService } from './organization.service';
   styleUrls: ['./organization.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationComponent implements OnInit, OnDestroy {
-  constructor(private organizationService: OrganizationService) {}
+export class OrganizationComponent implements OnInit {
+  constructor(private store: Store<AppState>) {}
 
   ngOnInit() {
-    this.organizationService.initUrlBindingStreams();
-  }
-
-  ngOnDestroy() {
-    this.organizationService.unSubscribe();
+    this.store.dispatch(getUserInfo());
   }
 }
