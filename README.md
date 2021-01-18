@@ -63,6 +63,7 @@
     + [Report Bugs](#report-bugs)
     + [Submit Feedback](#submit-feedback)
   * [License info](#license)
+  * [HTTPS config](#https)
 
 
 
@@ -554,7 +555,7 @@ Report bugs at https://github.com/exadel-inc/CompreFace/issues.
 
 If you are reporting a bug, please include:
 
-* Your operating system name and version.
+ Your operating system name and version.
 * Any details about your local setup that might be helpful in troubleshooting.
 * Detailed steps to reproduce the bug.
 
@@ -575,3 +576,131 @@ If you are proposing a feature, please:
 
 CompreFace is Open Source software released under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.html).
 
+## HTTPS config
+
+In this section, we will configure our application to run on HTTPS.
+* The first thing you need to generate SSL certificate, and put in the ssl folder along the path https://github.com/exadel-inc/CompreFace/blob/master/ui/nginx/.
+* After we need to transfer this config to https://github.com/exadel-inc/CompreFace/blob/master/ui/nginx/conf.d/nginx.conf
+
+Config nginx.conf :
+
+```
+upstream frsadmin {
+   server compreface-admin:8080 fail_timeout=10s max_fails=5;
+}
+
+upstream frsapi {
+   server compreface-api:8080 fail_timeout=10s max_fails=5;
+}
+
+server {
+    listen 80;
+    server_name ui;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name ui;
+    ssl_certificate /etc/nginx/ssl/your.generate.crt;
+    ssl_certificate_key /etc/nginx/ssl/your.generate.key;
+
+    client_max_body_size 5000K;
+
+    location / {
+        root /usr/share/nginx/html/;
+        index  index.html;
+        try_files $uri $uri/ /index.html =404;
+    }
+
+    location /admin/ {
+        proxy_pass http://frsadmin/;
+    }
+
+    location /swagger/ {
+        proxy_pass http://frsapi/;
+    }
+
+    location /api/v1/ {
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT';
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,x-api-key';
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain; charset=utf-8';
+            add_header 'Content-Length' 0;
+
+            return 204;
+        }
+
+        proxy_pass http://frsapi/api/v1/;
+    }
+}
+}
+```
+* And the last thing you need to make changes in docker-compose.yml open port 443 for https 
+https://github.com/exadel-inc/CompreFace/blob/master/docker-compose.yml
+
+```
+services:
+  compreface-postgres-db:
+    image: postgres:11.5
+    container_name: "compreface-postgres-db"
+    ports:
+      - "6432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${postgres_password}
+      - POSTGRES_DB=frs
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  compreface-admin:
+    image: ${registry}compreface-admin:${ADMIN_VERSION}
+    build:
+      context: ..
+      dockerfile: dev/Dockerfile
+      target: frs_crud
+    container_name: "compreface-admin"
+    ports:
+      - "8081:8080"
+      - "5006:5005"
+    environment:
+      - POSTGRES_PASSWORD=${postgres_password}
+      - POSTGRES_URL=jdbc:postgresql://${postgres_domain}:${postgres_port}/frs
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      - compreface-postgres-db
+      - compreface-api
+
+  compreface-api:
+    image: ${registry}compreface-api:${API_VERSION}
+    container_name: "compreface-api"
+    ports:
+      - "8082:8080"
+      - "5005:5005"
+    depends_on:
+      - compreface-postgres-db
+    environment:
+      - POSTGRES_PASSWORD=${postgres_password}
+      - POSTGRES_URL=jdbc:postgresql://${postgres_domain}:${postgres_port}/frs
+      - SPRING_PROFILES_ACTIVE=dev
+
+  compreface-fe:
+    image: ${registry}compreface-fe:${FE_VERSION}
+    container_name: "compreface-ui"
+    ports:
+      - "8000:80"
+      - "443:443"
+    depends_on:
+      - compreface-api
+      - compreface-admin
+
+  compreface-core:
+    image: ${registry}compreface-core:${CORE_VERSION}
+    container_name: "compreface-core"
+    ports:
+      - "3300:3000"
+    environment:
+      - ML_PORT=3000
+```
