@@ -16,14 +16,16 @@
 
 package com.exadel.frs.core.trainservice.component.migration;
 
+import static com.exadel.frs.core.trainservice.sdk.faces.service.FacesRestApiClient.CALCULATOR_PLUGIN;
 import com.exadel.frs.core.trainservice.entity.Face.Embedding;
 import com.exadel.frs.core.trainservice.entity.Image;
 import com.exadel.frs.core.trainservice.repository.FacesRepository;
 import com.exadel.frs.core.trainservice.repository.ImagesRepository;
-import com.exadel.frs.core.trainservice.system.feign.FeignClientFactory;
-import com.exadel.frs.core.trainservice.system.feign.python.FacesClient;
+import com.exadel.frs.core.trainservice.sdk.config.FeignClientFactory;
+import com.exadel.frs.core.trainservice.sdk.faces.feign.FacesFeignClient;
 import com.exadel.frs.core.trainservice.util.MultipartFileData;
 import feign.FeignException;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +61,7 @@ public class MigrationComponent {
     }
 
     private void processFaces(final String url) {
-        val migrationServerFeignClient = feignClientFactory.getFeignClient(FacesClient.class, url);
+        val migrationServerFeignClient = feignClientFactory.getFeignClient(FacesFeignClient.class, url);
         val migrationCalculatorVersion = migrationServerFeignClient.getStatus().getCalculatorVersion();
 
         log.info("Calculating embedding for faces");
@@ -70,21 +72,20 @@ public class MigrationComponent {
                 val image = imagesRepository.findById(face.getId()).orElse(new Image());
                 val file = new MultipartFileData(image.getRawImg(), face.getFaceName(), null);
 
+                val faceEmbedding = new Embedding();
                 try {
-                    val scanResponse = migrationServerFeignClient.scanFaces(file, 1, null);
-
-                    val embeddings = scanResponse.getResult().stream()
-                                                 .findFirst().orElseThrow()
-                                                 .getEmbedding();
-                    face.setEmbedding(new Embedding(embeddings, scanResponse.getCalculatorVersion()));
-
-                    facesRepository.save(face);
+                    val findFacesResponse = migrationServerFeignClient.findFaces(file, 1, null, CALCULATOR_PLUGIN);
+                    val embeddings = findFacesResponse.getResult().stream()
+                                                      .findFirst().orElseThrow()
+                                                      .getEmbedding();
+                    faceEmbedding.setEmbeddings(Arrays.asList(embeddings));
+                    faceEmbedding.setCalculatorVersion(findFacesResponse.getPluginsVersions().getCalculator());
                 } catch (FeignException.InternalServerError | FeignException.BadRequest error) {
-                    log.error("{} during processing facename {} with id {}", error.toString(), face.getFaceName(), face.getId());
-                    face.setEmbedding(new Embedding());
-
-                    facesRepository.save(face);
+                    log.error("Error during processing facename {} with id {}", face.getFaceName(), face.getId(), error);
                 }
+
+                face.setEmbedding(faceEmbedding);
+                facesRepository.save(face);
             }
         }
     }

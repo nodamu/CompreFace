@@ -1,7 +1,9 @@
 {
   "common": {
     "capital": {
+      "change": "CHANGE",
       "create": "CREATE",
+      "clone": "CLONE",
       "cancel": "CANCEL",
       "yes": "YES",
       "add": "ADD",
@@ -10,7 +12,9 @@
       "delete": "DELETE"
     },
     "name": "Name",
-    "create": "Create"
+    "type": "Type",
+    "create": "Create",
+    "unknown_error": "Sorry, something went wrong"
   },
   "login": {
     "title": "Login",
@@ -36,10 +40,16 @@
     "login": "LOGIN",
     "sign_up": "SIGN UP"
   },
+  "change_password": {
+    "old_password": "Old password",
+    "new_password": "New Password"
+  },
   "toolbar": {
     "logout": "Logout",
+    "change_password": "Change password",
     "user_avatar_info": "User avatar",
-    "logo": "CompreFace logo"
+    "logo": "CompreFace logo",
+    "signup": "Sign Up"
   },
   "applications": {
     "caption": "Table of applications",
@@ -71,15 +81,17 @@
     "caption": "Table of face collections",
     "title": "Models",
     "name": "Name",
+    "type": "Type",
     "api_key": "API key",
-    "header": "Face Collection",
+    "header": "Service",
     "create_model_info": " Create the first Face Collection, where you will be able to add, recognize, delete faces,\n      get list of the faces and finally recognize a face.",
     "create_dialog": {
-      "title": "Create Face Collection",
+      "title": "Services",
       "name": "Name"
     },
     "select_menu": {
       "edit": "EDIT",
+      "clone": "CLONE",
       "delete": "DELETE",
       "test": "TEST"
     },
@@ -113,6 +125,7 @@
       "warn_hint_anyway": "You can delete him anyway.",
       "warn_hint_owner": "In this case you will become the OWNER of these applications.",
       "warn_hint_new_owner": "In this case the owner of this applications will be: ",
+      "warn_hint_replace_to_owner": "In this case, the OWNER of the application will be the global OWNER",
       "default_confirmation": "{{type}} {{name}} and all related data will be deleted.\nAre you sure?"
     },
     "add_users_title": "Add users to the CompreFace",
@@ -146,7 +159,8 @@
     "link": "Try Demo"
   },
   "face_recognition_container": {
-    "file_size_error": "The photo size is more than 5 Mb"
+    "file_size_error": "The photo size is more than 5 Mb",
+    "file_unavailable_extension": "File {{filename}} has an unavailable extension"
   },
   "face_recognition": {
     "no_recognized": "No faces recognized",
@@ -156,9 +170,10 @@
     "incorrect_credentials": "E-mail or Password is incorrect.",
     "already_in_use": "This e-mail is already in use.",
     "new_account_confirm_email": "You have created new account, please confirm your email",
-    "new_account_login": "You have created new account, please login into your account"
+    "new_account_login": "You have created new account, please login into your account",
+    "change_password_success": "Password has successfully been changed"
   },
   "application_user_list": {
-    "invitation_sent": "Invitation was sent to {{email}}"
+    "invitation_sent": "Invitation was sent to {{userEmail}}"
   }
 }

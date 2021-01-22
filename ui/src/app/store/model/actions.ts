@@ -21,13 +21,17 @@ export const loadModels = createAction('[Model] Load Models', props<{ applicatio
 export const loadModelsSuccess = createAction('[Model] Load Models Success', props<{ models: Model[] }>());
 export const loadModelsFail = createAction('[Model] Load Models Fail', props<{ error: any }>());
 
-export const createModel = createAction('[Model] Create Model', props<Partial<ModelUpdate>>());
+export const createModel = createAction('[Model] Create Model', props<{ model: Partial<ModelUpdate> }>());
 export const createModelSuccess = createAction('[Model] Create Model Success', props<{ model: Model }>());
 export const createModelFail = createAction('[Model] Create Model Fail', props<{ error: any }>());
 
-export const updateModel = createAction('[Model] Update Model', props<ModelUpdate>());
+export const updateModel = createAction('[Model] Update Model', props<Partial<ModelUpdate>>());
 export const updateModelSuccess = createAction('[Model] Update Model Success', props<{ model: Model }>());
 export const updateModelFail = createAction('[Model] Update Model Fail', props<{ error: any }>());
+
+export const cloneModel = createAction('[Model] Clone Model', props<Partial<ModelUpdate>>());
+export const cloneModelSuccess = createAction('[Model] Clone Model Success', props<{ model: Model }>());
+export const cloneModelFail = createAction('[Model] Clone Model Fail', props<{ error: any }>());
 
 export const deleteModel = createAction('[Model] Delete Model', props<Partial<ModelUpdate>>());
 export const deleteModelSuccess = createAction('[Model] Delete Model Success', props<{ modelId: string }>());

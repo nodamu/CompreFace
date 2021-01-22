@@ -14,35 +14,53 @@
  * permissions and limitations under the License.
  */
 
-import { Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { getImageSize, ImageSize, recalculateFaceCoordinate } from '../face-recognition.helpers';
+
+import { ServiceTypes } from '../../../data/enums/model.enum';
+import { getImageSize, ImageSize, recalculateFaceCoordinate, resultRecognitionFormatter } from '../face-recognition.helpers';
+import { RequestResult } from '../../../data/interfaces/response-result';
+import { RequestInfo } from '../../../data/interfaces/request-info';
 
 @Component({
   selector: 'app-recognition-result',
   templateUrl: './recognition-result.component.html',
   styleUrls: ['./recognition-result.component.scss'],
 })
-export class RecognitionResultComponent implements OnDestroy {
-  @Input() pending = true;
+export class RecognitionResultComponent implements OnChanges, OnDestroy {
   @Input() file: File;
-  @Input() requestInfo: any;
-  // Handle input changes and update image.
-  @Input() set printData(value: any) {
-    if (this.printSubscription) {
-      this.printSubscription.unsubscribe();
-    }
+  @Input() requestInfo: RequestInfo;
+  @Input() printData: RequestResult;
+  @Input() isLoaded: boolean;
+  @Input() type: string;
 
-    if (value) {
-      this.printSubscription = this.printResult(value.box, value.faces).subscribe();
+  @ViewChild('canvasElement') set canvasElement(canvas: ElementRef) {
+    if (canvas) {
+      this.myCanvas = canvas;
+
+      if (this.printSubscription) {
+        this.printSubscription.unsubscribe();
+      }
+
+      if (this.printData && this.myCanvas) {
+        this.printSubscription = this.printResult(this.printData).subscribe();
+      }
     }
   }
-  @ViewChild('canvasElement', { static: true }) myCanvas: ElementRef;
 
   canvasSize: ImageSize = { width: 500, height: null };
+  myCanvas: ElementRef;
   faceDescriptionHeight = 25;
+  formattedResult: string;
+
   private printSubscription: Subscription;
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes?.requestInfo?.currentValue) {
+      this.formattedResult = resultRecognitionFormatter(this.requestInfo.response);
+    }
+  }
 
   ngOnDestroy() {
     if (this.printSubscription) {
@@ -50,52 +68,99 @@ export class RecognitionResultComponent implements OnDestroy {
     }
   }
 
-  /*
-   * Print result on template.
-   *
-   * @param box Box
-   * @param face Face
-   */
-  printResult(box: any, face: any): Observable<any> {
+  printResult(result: any): Observable<any> {
     return getImageSize(this.file).pipe(
       tap(({ width, height }) => {
         this.canvasSize.height = (height / width) * this.canvasSize.width;
         this.myCanvas.nativeElement.setAttribute('height', this.canvasSize.height);
       }),
-      map((imageSize) => recalculateFaceCoordinate(box, imageSize, this.canvasSize, this.faceDescriptionHeight)),
-      tap((recalculatedBox) => this.drawCanvas(recalculatedBox, face))
+      map(imageSize => this.prepareForDraw(imageSize, result)),
+      map(preparedImageData => this.drawCanvas(preparedImageData))
     );
+  }
+
+  private prepareForDraw(size, rawData): Observable<any> {
+    return rawData.map(value => ({
+      box: recalculateFaceCoordinate(value.box, size, this.canvasSize, this.faceDescriptionHeight),
+      faces: value.faces,
+    }));
+  }
+
+  private createRecognitionImage(ctx, box, face) {
+    ctx = this.createDefaultImage(ctx, box);
+    ctx.fillStyle = 'green';
+    ctx.fillRect(box.x_min, box.y_min - this.faceDescriptionHeight, box.x_max - box.x_min, this.faceDescriptionHeight);
+    ctx.fillRect(box.x_min, box.y_max, box.x_max - box.x_min, this.faceDescriptionHeight);
+    ctx.fillStyle = 'white';
+    ctx.fillText(face.similarity, box.x_min + 10, box.y_max + 20);
+    ctx.fillText(face.face_name, box.x_min + 10, box.y_min - 5);
+  }
+
+  private createDetectionImage(ctx, box) {
+    ctx = this.createDefaultImage(ctx, box);
+    ctx.fillStyle = 'green';
+    ctx.fillRect(box.x_min, box.y_max, box.x_max - box.x_min, this.faceDescriptionHeight);
+    ctx.fillStyle = 'white';
+    ctx.fillText(box.probability.toFixed(4), box.x_min + 10, box.y_max + 20);
+  }
+
+  private createDefaultImage(ctx, box) {
+    ctx.beginPath();
+    ctx.strokeStyle = 'green';
+    ctx.moveTo(box.x_min, box.y_min);
+    ctx.lineTo(box.x_max, box.y_min);
+    ctx.lineTo(box.x_max, box.y_max);
+    ctx.lineTo(box.x_min, box.y_max);
+    ctx.lineTo(box.x_min, box.y_min);
+    ctx.stroke();
+    ctx.font = '12pt Roboto Regular Helvetica Neue sans-serif';
+
+    return ctx;
   }
 
   /*
    * Make canvas and draw face and info on image.
    *
-   * @param box Face coordinates from BE.
-   * @param face.
+   * @preparedData prepared box data and faces.
    */
-  drawCanvas(box: any, face: any) {
-    const img = new Image();
-    const resultFace = face.length > 0 ? face[0] : { face_name: undefined, similarity: 0 };
-    const ctx: CanvasRenderingContext2D = this.myCanvas.nativeElement.getContext('2d');
+  drawCanvas(preparedData) {
+    switch (this.type) {
+      case ServiceTypes.Recognition:
+        this.drawRecognitionCanvas(preparedData);
+        break;
 
+      case ServiceTypes.Detection:
+        this.drawDetectionCanvas(preparedData);
+        break;
+    }
+  }
+
+  createImage(drow) {
+    const img = new Image();
+    const ctx: CanvasRenderingContext2D = this.myCanvas.nativeElement.getContext('2d');
     img.onload = () => {
       ctx.drawImage(img, 0, 0, this.canvasSize.width, this.canvasSize.height);
-      ctx.beginPath();
-      ctx.strokeStyle = 'green';
-      ctx.moveTo(box.x_min, box.y_min);
-      ctx.lineTo(box.x_max, box.y_min);
-      ctx.lineTo(box.x_max, box.y_max);
-      ctx.lineTo(box.x_min, box.y_max);
-      ctx.lineTo(box.x_min, box.y_min);
-      ctx.stroke();
-      ctx.fillStyle = 'green';
-      ctx.fillRect(box.x_min, box.y_min - this.faceDescriptionHeight, box.x_max - box.x_min, this.faceDescriptionHeight);
-      ctx.fillRect(box.x_min, box.y_max, box.x_max - box.x_min, this.faceDescriptionHeight);
-      ctx.fillStyle = 'white';
-      ctx.font = '12pt Roboto Regular Helvetica Neue sans-serif';
-      ctx.fillText(resultFace.similarity, box.x_min + 10, box.y_max + 20);
-      ctx.fillText(resultFace.face_name, box.x_min + 10, box.y_min - 5);
+      drow(img, ctx);
     };
     img.src = URL.createObjectURL(this.file);
+  }
+
+  drawRecognitionCanvas(data) {
+    this.createImage((img, ctx) => {
+      for (const value of data) {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const resultFace = value.faces.length > 0 ? value.faces[0] : { face_name: undefined, similarity: 0 };
+        this.createRecognitionImage(ctx, value.box, resultFace);
+      }
+    });
+  }
+
+  drawDetectionCanvas(data) {
+    this.createImage((img, ctx) => {
+      for (const value of data) {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        this.createDetectionImage(ctx, value.box);
+      }
+    });
   }
 }

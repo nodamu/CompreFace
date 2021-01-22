@@ -15,7 +15,7 @@
  */
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { combineLatest, Observable, Subscription } from 'rxjs';
+import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AppUser } from 'src/app/data/interfaces/app-user';
 import { IFacade } from 'src/app/data/interfaces/IFacade';
@@ -24,7 +24,7 @@ import { AppState } from 'src/app/store';
 import { loadRolesEntityAction } from 'src/app/store/role/actions';
 import { selectAllRoles, selectIsPendingRoleStore } from 'src/app/store/role/selectors';
 import { deleteUser, loadUsersEntityAction, updateUserRoleWithRefreshAction } from 'src/app/store/user/action';
-import { selectCurrentUserRole, selectIsPendingUserStore, selectUsers, selectUsersWithOwnerApp } from 'src/app/store/user/selectors';
+import { selectCurrentUserRole, selectIsPendingUserStore, selectUsersWithOwnerApp } from 'src/app/store/user/selectors';
 import { selectUserEmail, selectUserId } from 'src/app/store/userInfo/selectors';
 import { Role } from '../../data/enums/role.enum';
 
@@ -54,7 +54,7 @@ export class UserListFacade implements IFacade {
     this.currentUserId$ = this.store.select(selectUserId);
     this.currentUserEmail$ = this.store.select(selectUserEmail);
 
-    this.isLoading$ = combineLatest([usersLoading$, roleLoading$]).pipe(map((observResults) => !(!observResults[0] && !observResults[1])));
+    this.isLoading$ = combineLatest([usersLoading$, roleLoading$]).pipe(map(observResults => !(!observResults[0] && !observResults[1])));
   }
 
   initSubscriptions(): void {
@@ -77,7 +77,7 @@ export class UserListFacade implements IFacade {
     );
   }
 
-  deleteUser(deletion: UserDeletion, newOwner?: string): void {
+  deleteUser(deletion: UserDeletion, newOwner: string): void {
     this.store.dispatch(
       deleteUser({
         userId: deletion.userToDelete.userId,
