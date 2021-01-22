@@ -1,10 +1,10 @@
-name: Unit tests on maven
+name: Unit tests on maven test
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ efrs-917-github-actions-to-run-unit-tests-on-maven ]
   pull_request:
-    branches: [ develop ]
+    branches: [ efrs-917-github-actions-to-run-unit-tests-on-maven ]
 
 jobs:
   build:
