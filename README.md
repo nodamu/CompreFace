@@ -58,12 +58,12 @@
     + [Delete all examples of the face by name](#delete-all-examples-of-the-face-by-name)
     + [Delete an example of the face by ID](#delete-an-example-of-the-face-by-id)
     + [Verify faces from given image](#verify-faces-from-given-image)
+    + [HTTPS config](#HTTPS-config)
   * [Contributing](#contributing)
     + [Formatting standards](#formatting-standards)
     + [Report Bugs](#report-bugs)
     + [Submit Feedback](#submit-feedback)
   * [License info](#license)
-  * [HTTPS config](#HTTPS-config)
 
 
 
