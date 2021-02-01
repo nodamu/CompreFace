@@ -1,7 +1,10 @@
+name: Statistics to s3
+
 on:
-  schedule: 
-    # runs once a week on sunday
-    - cron: "55 23 * * 0"
+  push:
+    branches: [ EFRS-942-SetupsavingvisitorsstatisticstoS3 ]
+  pull_request:
+    branches: [ EFRS-942-SetupsavingvisitorsstatisticstoS3 ]
     
 jobs:
   # This workflow contains a single job called "traffic"
