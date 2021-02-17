@@ -56,8 +56,7 @@ public class VerifyController {
             @ApiParam(value = "The minimal percent confidence that found face is actually a face.")
             @RequestParam(value = "det_prob_threshold", required = false) final Double detProbThreshold,
             @ApiParam(value = "Comma-separated types of face plugins. Empty value - face plugins disabled, returns only bounding boxes")
-            @RequestParam(value = "face_plugins", required = false)
-            final String facePlugins
+            @RequestParam(value = "face_plugins", required = false) final String facePlugins
     ) {
         // find FaceResult for each file
         List<FindFacesResult> findFacesResults = Stream.of(processFile, checkFile)
@@ -72,7 +71,7 @@ public class VerifyController {
 
     private FindFacesResult getFaceResult(MultipartFile file, int limit, Double detProbThreshold, String facePlugins) {
         imageValidator.validate(file);
-        FindFacesResponse findFacesResponse = client.findFacesWithCalculator(file, limit, detProbThreshold, facePlugins);
+        FindFacesResponse findFacesResponse = client.findFaces(file, limit, detProbThreshold, facePlugins);
 
         if (CollectionUtils.isEmpty(findFacesResponse.getResult())) {
             throw new NoFacesFoundException();

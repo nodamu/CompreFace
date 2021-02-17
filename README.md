@@ -336,7 +336,7 @@ curl  -X POST "http://localhost:8000/api/v1/faces/recognize?limit=<limit>&predic
 | limit            | param       | integer | optional | maximum number of faces with best similarity in result. Value of 0 represents no limit. Default value: 0 |
 | det_prob_ threshold | param       | string | optional | minimum required confidence that a recognized face is actually a face. Value is between 0.0 and 1.0. |
 | prediction_count | param       | integer | optional | maximum number of predictions per faces. Default value: 1    |
-| face_plugins     | param       | string  | optional | comma-separated slugs of face plugins. Empty value - face plugins disabled, returns only bounding boxes. E.g. calculator,gender,age - returns embedding, gender and age for each face.    |
+| face_plugins     | param       | string  | optional | comma-separated slugs of face plugins. Empty value - face plugins disabled, returns only bounding boxes. E.g. landmarks,gender,age - returns landmarks, gender and age for each face.    |
 
 Response body on success:
 ```
@@ -560,25 +560,45 @@ Response body on success:
 {
   "result": [
     {
-      "box": {
-        "probability": <probability>,
-        "x_max": <integer>,
-        "y_max": <integer>,
-        "x_min": <integer>,
-        "y_min": <integer>
-      },
-      "similarity": <similarity1>
+    "processFileData": {
+        "age": null,
+        "gender": null,
+        "box": {
+            "probability": 0.9997355341911316,
+            "x_max": 782,
+            "y_max": 580,
+            "x_min": 510,
+            "y_min": 246
+        },
+        "landmarks": [
+            [596,386],
+            [700,385],
+            [653,437],
+            [613,487],
+            [691,485]
+        ],
+        "execution_time": {
+            "age": null,
+            "gender": null,
+            "detector": 14665.0,
+            "calculator": 219.0
+        }
     },
-    ...
-  ]
+    "similarity": 0.98853,
+    ...,
+    }
+]
 }
 ```
 
 | Element                        | Type    | Description                                                  |
 | ------------------------------ | ------- | ------------------------------------------------------------ |
+| processFileData                | object  | list of parameters of the bounding box for face of processImage |
 | box                            | object  | list of parameters of the bounding box for this face (on processedImage) |
 | probability                    | float   | probability that a found face is actually a face (on processedImage)     |
 | x_max, y_max, x_min, y_min     | integer | coordinates of the frame containing the face (on processedImage)         |
+| landmarks                      | list    | list of the coordinates of the frame containing the face-landmarks |
+| execution_time                 | object  | list of parameters of showing time spent for executing current operation |
 | similarity                     | float   | similarity between faces on given images                     |
 
 
